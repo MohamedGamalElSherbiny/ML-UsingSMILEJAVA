@@ -23,6 +23,9 @@ public class SmileRF2Demo {
         int[] pclassValues = df.stringVector(columnName).factorize(new NominalScale(values)).toIntArray();
         return pclassValues;
     }
+    public static int[] explode(DataFrame df, String columnName){
+        return df.intVector(columnName).stream().toArray();
+    }
     public static void main(String[] args) throws InvocationTargetException, InterruptedException, IOException, URISyntaxException {
         DataFrame titanic = Read.csv("src/main/resources/data/data.csv", CSVFormat.DEFAULT.withDelimiter(';')
                 .withHeader("Name","Pclass","Age","Sex","Survived")
@@ -42,6 +45,11 @@ public class SmileRF2Demo {
         System.out.println(Arrays.toString(model.importance()));
         System.out.println(model.metrics ());
         //TODO load test data to validate model
+        DataFrame testData = Read.csv("src/main/resources/data/titanic_test.csv", CSVFormat.DEFAULT.withDelimiter(';')
+                .withHeader("Name","Pclass","Age","Sex","Survived")
+                .withSkipHeaderRecord(true));
+        testData = testData.merge(IntVector.of("PclassValue", explode(testData, "Pclass")));
+//        testData = testData.merge(IntVector.of())
     }
     private static void eda(DataFrame titanic) throws InterruptedException, InvocationTargetException {
         titanic.summary();

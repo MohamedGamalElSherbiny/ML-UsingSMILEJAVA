@@ -18,14 +18,14 @@ public class SmileDemoEDA {
     String trainPath = "src/main/resources/data/titanic_train.csv";
     String testPath = "src/main/resources/data/titanic_test.csv";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException, InvocationTargetException {
         SmileDemoEDA sd = new SmileDemoEDA ();
         PassengerProvider pProvider = new PassengerProvider ();
         DataFrame trainData = pProvider.readCSV (sd.trainPath);
         System.out.println (trainData.structure ());
         System.in.read();
         System.out.println (trainData.summary ());
-         System.in.read();
+        System.in.read();
         trainData = trainData.merge (IntVector.of ("Gender",
                 encodeCategory (trainData, "Sex")));
         trainData = trainData.merge (IntVector.of ("PClassValues",
@@ -58,7 +58,21 @@ public class SmileDemoEDA {
         System.out.println(Arrays.toString(model.importance()));
         System.out.println(model.metrics ());
         //TODO load test data to validate model
+        DataFrame testData = pProvider.readCSV(sd.testPath);
+        System.out.println(testData.structure());
+        testData = testData.merge(IntVector.of("Gender", encodeCategory(testData, "Sex")));
+        testData = testData.merge(IntVector.of("PClassValues", explode(testData, "Pclass")));
+        System.out.println(testData.structure());
+        testData = testData.drop("Name");
+        testData = testData.drop("Pclass");
+        testData = testData.drop("Sex");
+        System.out.println(testData.summary());
+        int[][] values = model.test(testData);
+//        Histogram.of(testData.intVector(values[0]), model.size(), false).canvas().window();
+    }
 
+    public static int[] explode(DataFrame df, String columnName){
+        return df.intVector(columnName).stream().toArray();
     }
 
     public static int[] encodeCategory(DataFrame df, String columnName) {
@@ -68,9 +82,9 @@ public class SmileDemoEDA {
     }
 
     private static void eda(DataFrame titanic) throws InterruptedException, InvocationTargetException {
-        titanic.summary ();
-        DataFrame titanicSurvived = DataFrame.of (titanic.stream ().filter (t -> t.get ("Survived").equals (1)));
-        DataFrame titanicNotSurvived = DataFrame.of (titanic.stream ().filter (t -> t.get ("Survived").equals (0)));
+        System.out.println(titanic.summary());
+        DataFrame titanicSurvived = DataFrame.of(titanic.stream().filter(t -> t.get("Survived").equals(1)));
+        DataFrame titanicNotSurvived = DataFrame.of(titanic.stream().filter(t -> t.get("Survived").equals(0)));
         titanicNotSurvived.omitNullRows ().summary ();
         titanicSurvived = titanicSurvived.omitNullRows ();
         titanicSurvived.summary ();
@@ -101,9 +115,7 @@ public class SmileDemoEDA {
                 .canvas ().setAxisLabels ("Classes", "Count")
                 .setTitle ("Pclass values frequencies among surviving passengers")
                 .window ();
-        //Histogram.of(values, map.size(), false).canvas().window();
+//        Histogram.of(values, map.size(), false).canvas().window();
         System.out.println (titanicSurvived.schema ());
-        //////////////////////////////////////////////////////////////////////////
-
     }
 }
