@@ -30,7 +30,6 @@ public class SmileDemoEDA {
                 encodeCategory (trainData, "Sex")));
         trainData = trainData.merge (IntVector.of ("PClassValues",
                 encodeCategory (trainData, "Pclass")));
-
         System.out.println ("=======Encoding Non Numeric Data==============");
         System.out.println (trainData.structure ());
         //System.out.println (trainData);
@@ -67,8 +66,12 @@ public class SmileDemoEDA {
         testData = testData.drop("Pclass");
         testData = testData.drop("Sex");
         System.out.println(testData.summary());
+        Double averageAge = testData.stream ()
+                .mapToDouble (t -> t.isNullAt ("Age") ? 0.0 : t.getDouble ("Age"))
+                .average ()
+                .orElse (0);
+        System.out.println(testData.summary());
         int[][] values = model.test(testData);
-//        Histogram.of(testData.intVector(values[0]), model.size(), false).canvas().window();
     }
 
     public static int[] explode(DataFrame df, String columnName){
@@ -77,8 +80,7 @@ public class SmileDemoEDA {
 
     public static int[] encodeCategory(DataFrame df, String columnName) {
         String[] values = df.stringVector (columnName).distinct ().toArray (new String[]{});
-        int[] pclassValues = df.stringVector (columnName).factorize (new NominalScale (values)).toIntArray ();
-        return pclassValues;
+        return df.stringVector (columnName).factorize (new NominalScale (values)).toIntArray ();
     }
 
     private static void eda(DataFrame titanic) throws InterruptedException, InvocationTargetException {
@@ -107,14 +109,14 @@ public class SmileDemoEDA {
                 .stream ().mapToInt (i -> i.intValue ())
                 .toArray ();
 
-        Histogram.of (titanicSurvived.doubleVector ("Age").toDoubleArray (), 15, false)
-                .canvas ().setAxisLabels ("Age", "Count")
-                .setTitle ("Age frequencies among surviving passengers")
-                .window ();
-        Histogram.of (titanicSurvived.intVector ("PClassValues").toIntArray (), 4, true)
-                .canvas ().setAxisLabels ("Classes", "Count")
-                .setTitle ("Pclass values frequencies among surviving passengers")
-                .window ();
+//        Histogram.of (titanicSurvived.doubleVector ("Age").toDoubleArray (), 15, false)
+//                .canvas ().setAxisLabels ("Age", "Count")
+//                .setTitle ("Age frequencies among surviving passengers")
+//                .window ();
+//        Histogram.of (titanicSurvived.intVector ("PClassValues").toIntArray (), 4, true)
+//                .canvas ().setAxisLabels ("Classes", "Count")
+//                .setTitle ("Pclass values frequencies among surviving passengers")
+//                .window ();
 //        Histogram.of(values, map.size(), false).canvas().window();
         System.out.println (titanicSurvived.schema ());
     }
